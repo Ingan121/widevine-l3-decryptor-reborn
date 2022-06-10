@@ -1,0 +1,7 @@
+{
+  "proxy": {},
+  "default_cdms": [
+    "internal-cb020a2b3008473d13cb52234313cdc624a457b4"
+],
+  "appenders": ["staff_getwvkeys"]
+}

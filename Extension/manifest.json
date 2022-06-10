@@ -1,0 +1,35 @@
+{
+  "manifest_version": 2,
+  "name": "Widevine Stealer",
+  "short_name": "WidevineStealer",
+  "description": "Steals and logs media keys from websites that use Widevine DRM",
+  "version": "1.0.0",
+  "permissions":
+  [
+    "webRequest",
+    "<all_urls>",
+    "https://drm-u1.dvdfab.cn/*"
+  ],
+  "icons":
+  {
+
+  },
+  "browser_action": {
+
+  },
+  "content_scripts":
+  [
+    {
+      "matches": ["https://*/*"],
+      "js": ["content_script.js"],
+      "css": [],
+      "run_at": "document_start",
+      "all_frames": true
+    }
+  ],
+  "background": {
+    "scripts": ["background_script.js"],
+    "persistent": true
+  },
+  "web_accessible_resources": ["content_key_decryption.js", "eme_interception.js", "lib/*", "protobuf-generated/*"]
+}
