@@ -5,7 +5,6 @@ async function injectScripts()
     await injectScript('lib/pbf.3.0.5.min.js');
     await injectScript('lib/cryptojs-aes_0.2.0.min.js');
     await injectScript('protobuf-generated/license_protocol.proto.js');
-
     
     await injectScript('content_key_decryption.js');
     await injectScript('eme_interception.js');
@@ -30,7 +29,8 @@ window.addEventListener("message", function(event) {
     if (event.source != window)
         return;
 
-    if (event.data.kid && (event.data.kid.length == 32)) {
+    if (location.origin == 'https://www.netflix.com' && event.data.kid && event.data.kid.length == 32) {
+        //console.log('kid: %s', event.data.kid);
         chrome.runtime.sendMessage({ kid: event.data.kid }, decryptedKey => {
             if (decryptedKey == -1) console.log("WidevineDecryptor: An error occured! (KID=" + event.data.kid + ")");
             else console.log("WidevineDecryptor: Found key: " + decryptedKey + " (KID=" + event.data.kid + ")");
@@ -38,12 +38,17 @@ window.addEventListener("message", function(event) {
     }
 
     if (event.data.pssh) {
-        console.log('pssh: %s', event.data.pssh)
+        //console.log('pssh: %s', event.data.pssh)
         chrome.runtime.sendMessage({ pssh: event.data.pssh });
     }
 
     if (event.data.reqData) {
-        console.log('reqData length: %s', event.data.reqData.length)
+        //console.log('reqData length: %s', event.data.reqData.length)
         chrome.runtime.sendMessage({ reqData: event.data.reqData });
     }
+});
+
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    console.log("WidevineDecryptor: Found key: %s (KID=%s)", request.key, request.kid);
+    sendResponse('OK');
 });

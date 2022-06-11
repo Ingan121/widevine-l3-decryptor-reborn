@@ -3,26 +3,26 @@ let licURL = '';
 let headers = {};
 let proxy = '';
 
+let tabId = -1;
 let reqData = '';
 let xhrPackets = [];
 
 chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
-        console.log(request)
+        //console.log(request)
 
-        if (sender.origin == 'https://www.netflix.com') {
+        if (sender.origin == 'https://www.netflix.com' && request.kid) {
             const formData = new FormData();
             formData.append('cmd', 'download');
             formData.append('table', 'netflix_keys');
             formData.append('kid', request.kid);
-            formData.append('ver', '3');
+            formData.append('ver', '5');
             
             fetch('https://drm-u1.dvdfab.cn/ak/re/netflix/', {
                 method: 'POST',
                 body: formData
-            })
-                .then(response => response.json())
-                .then(responseJson => sendResponse(responseJson.R == "0" ? responseJson.key.match(`${request.kid}:(.{32})`)[1] : -1));
+            }).then(response => response.json())
+            .then(responseJson => sendResponse(responseJson.R == "0" ? responseJson.key.match(`${request.kid}:(.{32})`)[1] : -1));
         } else if (request.pssh) {
             pssh = request.pssh;
             console.log('Received pssh: %s', pssh);
@@ -35,7 +35,8 @@ chrome.runtime.onMessage.addListener(
                     xhrPackets[i][1] == reqData.slice(0, 1000)) {
                     licURL = xhrPackets[i][0];
                     xhrPackets = [];
-                    console.log('Found license packet! URL is: %s', licURL);
+                    tabId = sender.tab.id;
+                    console.log('Found license packet! URL is: %s (Sender tab ID: %i)', licURL, tabId);
                     break;
                 }
             }
@@ -51,8 +52,13 @@ chrome.webRequest.onBeforeRequest.addListener(
         xhrPackets[xhrPackets.length] = data;
         console.log(data);
     }, {urls: ["<all_urls>"], types: ["xmlhttprequest"]},
-    ["requestBody"],
+    ["requestBody"]
 )
+
+let extraInfoSpec = ["requestHeaders"]
+if (typeof InstallTrigger === 'undefined') { // true if not Firefox - FF doesn't support extraHeaders
+    extraInfoSpec[1] = "extraHeaders";
+}
 
 chrome.webRequest.onBeforeSendHeaders.addListener(
     (details) => {
@@ -69,11 +75,11 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
         }, 1000);
 
     }, {urls: ["<all_urls>"], types: ["xmlhttprequest"]},
-    ["requestHeaders", "extraHeaders"],
+    extraInfoSpec
 )
 
 function startRequest() {
-    console.log(`Got everything required! \n\n  PSSH: ${pssh} \n  License URL: ${licURL} \n  Headers: ${headers} \n  Proxy: ${proxy} \n  Cache: True \n\nNow calling GWVK API...`);
+    console.log(`Got everything required! \n\nPSSH: ${pssh} \nLicense URL: ${licURL} \nHeaders: ${JSON.stringify(headers)} \nProxy: ${proxy ? proxy : 'None'} \nCache: True \n\nNow calling GWVK API...`);
     
     fetch("http://localhost:5352/api", {
         method: "POST",
@@ -87,7 +93,20 @@ function startRequest() {
             cache: true
         })
     }).then(response => response.json()).then(response => {
-        console.log(response.keys);
+        console.log(response);
+        if (response.keys) {
+            for (let i = 0; i < response.keys.length; i++) {
+                const kid = response.keys[i].key.slice(0, 32), key = response.keys[i].key.slice(33);
+                chrome.tabs.sendMessage(tabId, {kid, key}, response => {
+                    licURL = '';
+                    headers = {};
+                    tabId = -1;
+                    reqData = '';
+                    xhrPackets = [];
+                    console.log('Success!');
+                });
+            }
+        }
     });
 }
 

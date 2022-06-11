@@ -1,14 +1,13 @@
 {
   "manifest_version": 2,
-  "name": "Widevine Stealer",
-  "short_name": "WidevineStealer",
-  "description": "Steals and logs media keys from websites that use Widevine DRM",
+  "name": "Widevine L3 Decryptor Reborn",
+  "short_name": "WidevineDecryptor",
+  "description": "Decrypts and logs media keys from websites that use Widevine DRM",
   "version": "1.0.0",
   "permissions":
   [
     "webRequest",
-    "<all_urls>",
-    "https://drm-u1.dvdfab.cn/*"
+    "<all_urls>"
   ],
   "icons":
   {

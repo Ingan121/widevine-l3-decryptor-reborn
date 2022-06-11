@@ -21,8 +21,8 @@ EmeInterception.onOperation = function(operationType, args)
 {
     if (operationType == "GenerateRequestCall")
     {
-        // got initData
-        window.postMessage({pssh: bytesToBase64(args[1])});
+        //console.log('got initData');
+        window.postMessage({pssh: bytesToBase64(new Uint8Array(args[1]))});
     }
     else if (operationType == "MessageEvent")
     {
