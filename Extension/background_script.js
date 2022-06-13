@@ -9,25 +9,13 @@ let xhrPackets = [];
 
 chrome.runtime.onMessage.addListener(
     function (request, sender, sendResponse) {
-        //console.log(request)
+        console.log(request)
 
-        if (sender.origin == 'https://www.netflix.com' && request.kid) {
-            const formData = new FormData();
-            formData.append('cmd', 'download');
-            formData.append('table', 'netflix_keys');
-            formData.append('kid', request.kid);
-            formData.append('ver', '5');
-            
-            fetch('https://drm-u1.dvdfab.cn/ak/re/netflix/', {
-                method: 'POST',
-                body: formData
-            }).then(response => response.json())
-            .then(responseJson => sendResponse(responseJson.R == "0" ? responseJson.key.match(`${request.kid}:(.{32})`)[1] : -1));
-        } else if (request.pssh) {
-            pssh = request.pssh;
+        if (request.pssh) {
+            pssh = bytesToBase64(request.pssh);
             console.log('Received pssh: %s', pssh);
         } else if (request.reqData) {
-            reqData = request.reqData;
+            reqData = bytesToBase64(request.reqData);
             console.log('Received reqData (length: %s)', reqData.length);
             console.log(xhrPackets)
             for (let i = 0; i < xhrPackets.length; i++) {
@@ -79,7 +67,7 @@ chrome.webRequest.onBeforeSendHeaders.addListener(
 )
 
 function startRequest() {
-    console.log(`Got everything required! \n\nPSSH: ${pssh} \nLicense URL: ${licURL} \nHeaders: ${JSON.stringify(headers)} \nProxy: ${proxy ? proxy : 'None'} \nCache: True \n\nNow calling GWVK API...`);
+    console.log(`Got everything needed! \n\nPSSH: ${pssh} \nLicense URL: ${licURL} \nHeaders: ${JSON.stringify(headers)} \nProxy: ${proxy ? proxy : 'None'} \nCache: True \n\nNow calling GWVK API...`);
     
     fetch("http://localhost:5352/api", {
         method: "POST",
@@ -100,7 +88,6 @@ function startRequest() {
                 chrome.tabs.sendMessage(tabId, {kid, key}, response => {
                     licURL = '';
                     headers = {};
-                    tabId = -1;
                     reqData = '';
                     xhrPackets = [];
                     console.log('Success!');

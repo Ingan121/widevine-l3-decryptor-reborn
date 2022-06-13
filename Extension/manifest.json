@@ -30,5 +30,5 @@
     "scripts": ["background_script.js"],
     "persistent": true
   },
-  "web_accessible_resources": ["content_key_decryption.js", "eme_interception.js", "lib/*", "protobuf-generated/*"]
+  "web_accessible_resources": ["eme_interception.js"]
 }
