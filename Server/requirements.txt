@@ -1,6 +1,7 @@
 Flask==2.0.3
-protobuf==3.20.1
+protobuf==4.25.8
 pycryptodomex==3.14.1
 PyYAML==6.0
 requests==2.27.1
 flask_limiter==2.4.6
+urllib3>=2.5.0 # not directly required, pinned by Snyk to avoid a vulnerability
